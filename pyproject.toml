@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "applenotes-organization"
+version = "0.1.0"
+description = "MCP tool for managing Apple Notes on macOS"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [
+    {name = "applenotes-organization", email = "developer@example.com"}
+]
+keywords = ["mcp", "apple-notes", "macos"]
+
+dependencies = [
+    "fastmcp>=1.0.0",
+    "typing-extensions>=4.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["applenotes_organization*"]
+
+[project.scripts]
+applenotes-mcp = "applenotes_organization.server:main"
