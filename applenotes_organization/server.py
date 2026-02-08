@@ -1,22 +1,37 @@
 """Main MCP server for Apple Notes organization tool."""
 
+import logging
+
 from fastmcp import FastMCP
 
+from . import __description__, __version__
 from .tools.note_operations import NoteOperations
 from .tools.folder_operations import FolderOperations
-from .tools.account_operations import AccountOperations
+from .tools.vector_search import VectorSearch
 from .utils.error_handler import AppleNotesError
 
 
+# Configure logging to output to console (MCP output window)
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
+
+
 # Create FastMCP server
-mcp = FastMCP("applenotes-organization")
+mcp = FastMCP(
+    name="applenotes-organization",
+    instructions=__description__,
+    version=__version__,
+    website_url="https://github.com/jmkingsf/applenotes-organization",
+)
 
 
 # ============================================================================
 # NOTE OPERATIONS
 # ============================================================================
 
-@mcp.tool
+@mcp.tool()
 def list_all_notes() -> str:
     """List all notes in Apple Notes."""
     try:
@@ -26,7 +41,7 @@ def list_all_notes() -> str:
         return f"Error: {str(e)}"
 
 
-@mcp.tool
+@mcp.tool()
 def list_notes_in_folder(folder_name: str) -> str:
     """List notes in a specific folder.
     
@@ -40,7 +55,7 @@ def list_notes_in_folder(folder_name: str) -> str:
         return f"Error: {str(e)}"
 
 
-@mcp.tool
+@mcp.tool()
 def create_note(name: str, body: str = "", folder: str = "Notes") -> str:
     """Create a new note.
     
@@ -56,7 +71,7 @@ def create_note(name: str, body: str = "", folder: str = "Notes") -> str:
         return f"Error: {str(e)}"
 
 
-@mcp.tool
+@mcp.tool()
 def read_note(note_name: str) -> str:
     """Read the content of a note.
     
@@ -70,7 +85,7 @@ def read_note(note_name: str) -> str:
         return f"Error: {str(e)}"
 
 
-@mcp.tool
+@mcp.tool()
 def update_note(note_name: str, new_body: str) -> str:
     """Update a note's body content.
     
@@ -85,7 +100,7 @@ def update_note(note_name: str, new_body: str) -> str:
         return f"Error: {str(e)}"
 
 
-@mcp.tool
+@mcp.tool()
 def delete_note(note_name: str) -> str:
     """Delete a note.
     
@@ -99,7 +114,7 @@ def delete_note(note_name: str) -> str:
         return f"Error: {str(e)}"
 
 
-@mcp.tool
+@mcp.tool()
 def move_note(note_name: str, target_folder: str) -> str:
     """Move a note to a different folder.
     
@@ -114,7 +129,7 @@ def move_note(note_name: str, target_folder: str) -> str:
         return f"Error: {str(e)}"
 
 
-@mcp.tool
+@mcp.tool()
 def search_notes(keyword: str) -> str:
     """Search notes by content keyword.
     
@@ -128,7 +143,7 @@ def search_notes(keyword: str) -> str:
         return f"Error: {str(e)}"
 
 
-@mcp.tool
+@mcp.tool()
 def count_notes() -> str:
     """Get the total number of notes."""
     try:
@@ -138,7 +153,7 @@ def count_notes() -> str:
         return f"Error: {str(e)}"
 
 
-@mcp.tool
+@mcp.tool()
 def get_note_creation_date(note_name: str) -> str:
     """Get the creation date of a note.
     
@@ -152,7 +167,7 @@ def get_note_creation_date(note_name: str) -> str:
         return f"Error: {str(e)}"
 
 
-@mcp.tool
+@mcp.tool()
 def get_note_modification_date(note_name: str) -> str:
     """Get the modification date of a note.
     
@@ -166,7 +181,7 @@ def get_note_modification_date(note_name: str) -> str:
         return f"Error: {str(e)}"
 
 
-@mcp.tool
+@mcp.tool()
 def get_note_id(note_name: str) -> str:
     """Get the ID of a note.
     
@@ -180,7 +195,7 @@ def get_note_id(note_name: str) -> str:
         return f"Error: {str(e)}"
 
 
-@mcp.tool
+@mcp.tool()
 def get_note_container(note_name: str) -> str:
     """Get the container (folder) of a note.
     
@@ -194,7 +209,7 @@ def get_note_container(note_name: str) -> str:
         return f"Error: {str(e)}"
 
 
-@mcp.tool
+@mcp.tool()
 def get_note_properties(note_name: str) -> str:
     """Get all properties of a note.
     
@@ -213,7 +228,7 @@ def get_note_properties(note_name: str) -> str:
 # FOLDER OPERATIONS
 # ============================================================================
 
-@mcp.tool
+@mcp.tool()
 def list_all_folders() -> str:
     """List all folders in Apple Notes."""
     try:
@@ -223,7 +238,7 @@ def list_all_folders() -> str:
         return f"Error: {str(e)}"
 
 
-@mcp.tool
+@mcp.tool()
 def create_folder(folder_name: str) -> str:
     """Create a new folder.
     
@@ -237,7 +252,7 @@ def create_folder(folder_name: str) -> str:
         return f"Error: {str(e)}"
 
 
-@mcp.tool
+@mcp.tool()
 def delete_folder(folder_name: str) -> str:
     """Delete a folder.
     
@@ -251,7 +266,7 @@ def delete_folder(folder_name: str) -> str:
         return f"Error: {str(e)}"
 
 
-@mcp.tool
+@mcp.tool()
 def count_notes_in_folder(folder_name: str) -> str:
     """Count notes in a folder.
     
@@ -265,7 +280,7 @@ def count_notes_in_folder(folder_name: str) -> str:
         return f"Error: {str(e)}"
 
 
-@mcp.tool
+@mcp.tool()
 def get_folder_properties(folder_name: str) -> str:
     """Get properties of a folder.
     
@@ -281,42 +296,62 @@ def get_folder_properties(folder_name: str) -> str:
 
 
 # ============================================================================
-# ACCOUNT OPERATIONS
+# VECTOR SEARCH OPERATIONS
 # ============================================================================
 
-@mcp.tool
-def list_all_accounts() -> str:
-    """List all accounts in Apple Notes."""
-    try:
-        accounts = AccountOperations.list_all_accounts()
-        return f"Found {len(accounts)} accounts:\n" + "\n".join(f"- {account}" for account in accounts)
-    except AppleNotesError as e:
-        return f"Error: {str(e)}"
+@mcp.tool()
+def index_notes_in_folder(folder_name: str) -> str:
+    """Index all notes in a folder for vector search.
 
-
-@mcp.tool
-def get_default_account() -> str:
-    """Get the default account."""
-    try:
-        account = AccountOperations.get_default_account()
-        return f"Default account: {account}"
-    except AppleNotesError as e:
-        return f"Error: {str(e)}"
-
-
-@mcp.tool
-def list_folders_in_account(account_name: str) -> str:
-    """List folders in an account.
-    
     Args:
-        account_name: Name of the account
+        folder_name: Name of the folder to index
     """
     try:
-        folders = AccountOperations.list_folders_in_account(account_name)
-        return f"Found {len(folders)} folders in account '{account_name}':\n" + "\n".join(f"- {folder}" for folder in folders)
-    except AppleNotesError as e:
+        indexed = VectorSearch.index_folder(folder_name)
+        return f"Indexed {indexed} notes in folder '{folder_name}'."
+    except (AppleNotesError, Exception) as e:
         return f"Error: {str(e)}"
 
+
+@mcp.tool()
+def reindex_notes_since_last_index(folder_name: str = "") -> str:
+    """Reindex notes updated since the last index.
+
+    Args:
+        folder_name: Optional folder name to scope reindexing
+    """
+    try:
+        scoped_folder = folder_name or None
+        reindexed = VectorSearch.reindex_updated_notes(scoped_folder)
+        scope_text = f" in folder '{folder_name}'" if folder_name else ""
+        return f"Reindexed {reindexed} notes{scope_text}."
+    except (AppleNotesError, Exception) as e:
+        return f"Error: {str(e)}"
+
+
+@mcp.tool()
+def search_notes_vector(query: str, limit: int = 5, folder_name: str = "") -> str:
+    """Search notes using vector similarity.
+
+    Args:
+        query: Natural language search query
+        limit: Maximum number of results
+        folder_name: Optional folder name to scope search
+    """
+    try:
+        scoped_folder = folder_name or None
+        results = VectorSearch.search(query, limit=limit, folder_name=scoped_folder)
+
+        if not results:
+            return "No vector search results found."
+
+        lines = [
+            f"- {result.name} (folder: {result.folder}, score: {result.distance:.4f})"
+            for result in results
+        ]
+        return f"Found {len(results)} results:\n" + "\n".join(lines)
+    except (AppleNotesError, Exception) as e:
+        return f"Error: {str(e)}"
 
 # ============================================================================
 # MAIN ENTRY POINT

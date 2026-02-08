@@ -228,7 +228,39 @@ git push origin add-note-export-feature
 - Test complex operations with various note types
 - Ensure Full Disk Access permissions are properly handled
 
-## 📄 Code Documentation
+## � MCP Server Management
+
+### Restarting the Server After Changes
+
+**CRITICAL: Always restart the MCP server after making any code changes to ensure changes take effect.**
+
+After modifying any files in the project (Python code, AppleScript, configuration, etc.), you MUST restart the MCP server using VS Code commands.
+
+**Restart Command**:
+Use the `run_vscode_command` tool to restart the applenotes-organization server:
+```
+commandId: workbench.action.restartMCPServer
+args: ["applenotes-organization"]
+```
+
+**When to Restart**:
+- After editing any Python file in `applenotes_organization/`
+- After modifying AppleScript commands or logic
+- After updating dependencies in `pyproject.toml`
+- After making any configuration changes
+- Before testing new functionality
+- After fixing bugs or making any code modifications
+
+**Mandatory Workflow**:
+1. Make code changes
+2. Save all modified files
+3. **IMMEDIATELY restart the MCP server** (do not skip this step)
+4. Test the changes to verify they work as expected
+
+**Why This Matters**:
+The MCP server runs as a persistent process. Code changes are not reflected until the server restarts. Failing to restart will result in testing old code, leading to confusion and wasted debugging time.
+
+## �📄 Code Documentation
 
 ### Code Documentation Style
 

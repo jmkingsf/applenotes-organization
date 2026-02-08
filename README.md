@@ -11,6 +11,7 @@
 - Access account information
 - Get note metadata (creation date, modification date, container, etc.)
 - Advanced operations like bulk note management
+- Vector search and semantic indexing
 
 ## Installation
 
@@ -75,6 +76,11 @@ The MCP server exposes the following tools:
 - `delete_folder` - Delete a folder
 - `count_notes_in_folder` - Count notes in a folder
 - `get_folder_properties` - Get folder properties
+
+#### Vector Search Operations
+- `index_notes_in_folder` - Index all notes in a folder for vector search
+- `reindex_notes_since_last_index` - Reindex notes updated since last index
+- `search_notes_vector` - Search notes using vector similarity
 
 #### Account Operations
 - `list_all_accounts` - List all accounts

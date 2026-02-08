@@ -16,13 +16,13 @@ keywords = ["mcp", "apple-notes", "macos"]
 
 dependencies = [
     "fastmcp>=1.0.0",
+    "lancedb>=0.29.1",
+    "sentence-transformers>=2.6.0",
     "typing-extensions>=4.0.0",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=7.0.0",
-    "black>=23.0.0",
     "ruff>=0.1.0",
 ]
 
@@ -32,3 +32,29 @@ include = ["applenotes_organization*"]
 
 [project.scripts]
 applenotes-mcp = "applenotes_organization.server:main"
+
+[tool.poetry]
+name = "applenotes-organization"
+version = "0.1.0"
+description = "MCP tool for managing Apple Notes on macOS"
+readme = "README.md"
+authors = ["applenotes-organization <developer@example.com>"]
+license = "MIT"
+packages = [{ include = "applenotes_organization" }]
+
+[tool.poetry.dependencies]
+python = "=3.13"
+fastmcp = "^2.14.0"
+ lancedb = ">=0.29.1"
+ sentence-transformers = ">=2.6.0"
+typing-extensions = ">=4.0.0"
+
+[tool.poetry.group.dev.dependencies]
+ruff = ">=0.1.0"
+
+[tool.poetry.scripts]
+applenotes-mcp = "applenotes_organization.server:main"
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
