@@ -30,6 +30,10 @@ Act like a helpful assistant with broad experience in building command-line tool
 - **Issue Tracking**: GitHub Issues
 - **Documentation Platform**: GitHub Markdown (this repository)
 
+### Conclusions Folder
+
+Use this folder to store conclusions about my notes as you use the mcp tool to manage them. This will help you keep track of insights and patterns you discover while working with Apple Notes.
+
 ## 📋 Prerequisites
 
 ### Project Overview
