@@ -16,8 +16,9 @@ keywords = ["mcp", "apple-notes", "macos"]
 
 dependencies = [
     "fastmcp>=1.0.0",
-    "lancedb>=0.29.1",
+    "faiss-cpu>=1.8.0",
     "sentence-transformers>=2.6.0",
+    "numpy>=1.24.0,<3.0",
     "typing-extensions>=4.0.0",
 ]
 
@@ -43,10 +44,11 @@ license = "MIT"
 packages = [{ include = "applenotes_organization" }]
 
 [tool.poetry.dependencies]
-python = "=3.13"
+python = ">=3.11,<3.14"
 fastmcp = "^2.14.0"
- lancedb = ">=0.29.1"
- sentence-transformers = ">=2.6.0"
+faiss-cpu = ">=1.8.0"
+sentence-transformers = ">=2.6.0"
+numpy = ">=1.24.0,<3.0"
 typing-extensions = ">=4.0.0"
 
 [tool.poetry.group.dev.dependencies]

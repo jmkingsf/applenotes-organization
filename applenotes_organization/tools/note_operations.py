@@ -213,18 +213,24 @@ class NoteOperations:
         return output
 
     @staticmethod
-    def get_note_id(note_name: str) -> str:
+    def get_note_id(note_name: str, folder_name: Optional[str] = None) -> str:
         """
         Get the ID of a note.
 
         Args:
             note_name: Name of the note
+            folder_name: Optional folder to scope the lookup (avoids ambiguity when
+                         multiple notes share the same name)
 
         Returns:
             ID of the note
         """
         escaped_name = NoteOperations._escape_string(note_name)
-        script = f'tell application "Notes" to get id of note "{escaped_name}"'
+        if folder_name:
+            escaped_folder = NoteOperations._escape_string(folder_name)
+            script = f'tell application "Notes" to get id of note "{escaped_name}" of folder "{escaped_folder}"'
+        else:
+            script = f'tell application "Notes" to get id of note "{escaped_name}"'
         output = run_inline_applescript(script)
         return output
 
@@ -291,21 +297,29 @@ class NoteOperations:
             return 0.0
 
     @staticmethod
-    def get_note_modification_timestamp(note_name: str) -> float:
+    def get_note_modification_timestamp(note_name: str, folder_name: Optional[str] = None) -> float:
         """
         Get the modification date of a note as a Unix timestamp.
 
         Args:
             note_name: Name of the note
+            folder_name: Optional folder to scope the lookup
 
         Returns:
             Modification date as Unix timestamp
         """
         escaped_name = NoteOperations._escape_string(note_name)
-        script = (
-            'tell application "Notes" to get (modification date of note '
-            f'"{escaped_name}") - (date "January 1, 1970")'
-        )
+        if folder_name:
+            escaped_folder = NoteOperations._escape_string(folder_name)
+            script = (
+                f'tell application "Notes" to get (modification date of note '
+                f'"{escaped_name}" of folder "{escaped_folder}") - (date "January 1, 1970")'
+            )
+        else:
+            script = (
+                'tell application "Notes" to get (modification date of note '
+                f'"{escaped_name}") - (date "January 1, 1970")'
+            )
         output = run_inline_applescript(script)
         try:
             return float(output)
@@ -328,10 +342,10 @@ class NoteOperations:
         container = folder_name if folder_name else NoteOperations.get_note_container(note_name)
         
         return {
-            "note_id": NoteOperations.get_note_id(note_name),
+            "note_id": NoteOperations.get_note_id(note_name, folder_name=folder_name),
             "name": note_name,
             "folder": container,
             "body": NoteOperations.read_note(note_name),
             "created_ts": NoteOperations.get_note_creation_timestamp(note_name),
-            "modified_ts": NoteOperations.get_note_modification_timestamp(note_name),
+            "modified_ts": NoteOperations.get_note_modification_timestamp(note_name, folder_name=folder_name),
         }

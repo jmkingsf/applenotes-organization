@@ -229,11 +229,35 @@ def get_note_properties(note_name: str) -> str:
 # ============================================================================
 
 @mcp.tool()
+def open_folder(folder_name: str) -> str:
+    """Open and focus a folder in the Notes app.
+
+    Args:
+        folder_name: Name of the folder to open
+    """
+    try:
+        FolderOperations.open_folder(folder_name)
+        return f"Opened folder '{folder_name}'"
+    except AppleNotesError as e:
+        return f"Error: {str(e)}"
+
+
+@mcp.tool()
 def list_all_folders() -> str:
     """List all folders in Apple Notes."""
     try:
         folders = FolderOperations.list_all_folders()
         return f"Found {len(folders)} folders:\n" + "\n".join(f"- {folder}" for folder in folders)
+    except AppleNotesError as e:
+        return f"Error: {str(e)}"
+
+
+@mcp.tool()
+def list_folders_hierarchy() -> str:
+    """List all folders as an indented tree showing parent/child nesting."""
+    try:
+        tree = FolderOperations.list_folders_hierarchy()
+        return tree if tree else "No folders found."
     except AppleNotesError as e:
         return f"Error: {str(e)}"
 
@@ -248,6 +272,21 @@ def create_folder(folder_name: str) -> str:
     try:
         FolderOperations.create_folder(folder_name)
         return f"Folder '{folder_name}' created successfully"
+    except AppleNotesError as e:
+        return f"Error: {str(e)}"
+
+
+@mcp.tool()
+def create_subfolder(folder_name: str, parent_folder_name: str) -> str:
+    """Create a new folder inside an existing folder.
+
+    Args:
+        folder_name: Name of the subfolder to create
+        parent_folder_name: Name of the existing parent folder
+    """
+    try:
+        FolderOperations.create_subfolder(folder_name, parent_folder_name)
+        return f"Folder '{folder_name}' created inside '{parent_folder_name}'"
     except AppleNotesError as e:
         return f"Error: {str(e)}"
 
@@ -296,12 +335,12 @@ def get_folder_properties(folder_name: str) -> str:
 
 
 # ============================================================================
-# VECTOR SEARCH OPERATIONS
+# SEMANTIC SEARCH OPERATIONS (FAISS + paraphrase-MiniLM)
 # ============================================================================
 
 @mcp.tool()
-def index_notes_in_folder(folder_name: str) -> str:
-    """Index all notes in a folder for vector search.
+def index_folder(folder_name: str) -> str:
+    """Index all notes in a folder for semantic search.
 
     Args:
         folder_name: Name of the folder to index
@@ -314,36 +353,79 @@ def index_notes_in_folder(folder_name: str) -> str:
 
 
 @mcp.tool()
-def reindex_notes_since_last_index(folder_name: str = "") -> str:
-    """Reindex notes updated since the last index.
+def index_folder_first_n(folder_name: str, n: int) -> str:
+    """Index the first N notes in a folder (useful for large folders).
 
     Args:
-        folder_name: Optional folder name to scope reindexing
+        folder_name: Name of the folder to index
+        n: Number of notes to index
     """
     try:
-        scoped_folder = folder_name or None
-        reindexed = VectorSearch.reindex_updated_notes(scoped_folder)
-        scope_text = f" in folder '{folder_name}'" if folder_name else ""
-        return f"Reindexed {reindexed} notes{scope_text}."
+        indexed = VectorSearch.index_folder_first_n(folder_name, n)
+        return f"Indexed {indexed} of the first {n} notes in folder '{folder_name}'."
     except (AppleNotesError, Exception) as e:
         return f"Error: {str(e)}"
 
 
 @mcp.tool()
-def search_notes_vector(query: str, limit: int = 5, folder_name: str = "") -> str:
-    """Search notes using vector similarity.
+def index_note(note_name: str, folder_name: str = "") -> str:
+    """Index a single note for semantic search.
+
+    Args:
+        note_name: Name of the note to index
+        folder_name: Optional folder name to disambiguate the note
+    """
+    try:
+        scoped_folder = folder_name or None
+        changed = VectorSearch.index_note(note_name, folder_name=scoped_folder)
+        if changed:
+            return f"Note '{note_name}' indexed successfully."
+        return f"Note '{note_name}' is already up-to-date in the index."
+    except (AppleNotesError, Exception) as e:
+        return f"Error: {str(e)}"
+
+
+@mcp.tool()
+def reindex_note(note_name: str, folder_name: str = "") -> str:
+    """Force reindex a single note, updating its embedding regardless of modification time.
+
+    Args:
+        note_name: Name of the note to reindex
+        folder_name: Optional folder name to disambiguate the note
+    """
+    try:
+        scoped_folder = folder_name or None
+        VectorSearch.reindex_note(note_name, folder_name=scoped_folder)
+        return f"Note '{note_name}' reindexed successfully."
+    except (AppleNotesError, Exception) as e:
+        return f"Error: {str(e)}"
+
+
+@mcp.tool()
+def purge_index() -> str:
+    """Clear the entire semantic search index."""
+    try:
+        VectorSearch.purge_index()
+        return "Semantic search index purged."
+    except (AppleNotesError, Exception) as e:
+        return f"Error: {str(e)}"
+
+
+@mcp.tool()
+def search_notes_semantic(query: str, limit: int = 5, folder_name: str = "") -> str:
+    """Search notes using semantic (paraphrase) similarity.
 
     Args:
         query: Natural language search query
-        limit: Maximum number of results
-        folder_name: Optional folder name to scope search
+        limit: Maximum number of results (default: 5)
+        folder_name: Optional folder name to scope the search
     """
     try:
         scoped_folder = folder_name or None
         results = VectorSearch.search(query, limit=limit, folder_name=scoped_folder)
 
         if not results:
-            return "No vector search results found."
+            return "No semantic search results found."
 
         lines = [
             f"- {result.name} (folder: {result.folder}, score: {result.distance:.4f})"
