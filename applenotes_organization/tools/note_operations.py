@@ -28,6 +28,37 @@ class NoteOperations:
         return value.replace('"', '\\"')
 
     @staticmethod
+    def _applescript_string(value: str) -> str:
+        """
+        Return a safe AppleScript expression for an arbitrary string value.
+
+        Curly apostrophes (U+2018/U+2019) and straight apostrophes (U+0027)
+        terminate double-quoted AppleScript string literals early when passed
+        via osascript, causing syntax errors. This method splits the value at
+        every such character and joins the parts with AppleScript's & operator
+        so no problematic character ever appears inside a string literal.
+
+        Returns a complete AppleScript expression, e.g.:
+            "Normal note"
+            "Reese" & (character id 8217) & "s cookies"
+        """
+        import re
+        QUOTE_MAP = {
+            '\u0027': '(ASCII character 39)',   # straight apostrophe
+            '\u2018': '(character id 8216)',     # left single quotation mark
+            '\u2019': '(character id 8217)',     # right single quotation mark
+        }
+        pattern = re.compile('([' + re.escape(''.join(QUOTE_MAP)) + '])')
+        parts = pattern.split(value)
+        result: list[str] = []
+        for part in parts:
+            if part in QUOTE_MAP:
+                result.append(QUOTE_MAP[part])
+            elif part:
+                result.append('"' + part.replace('\\', '\\\\').replace('"', '\\"') + '"')
+        return ' & '.join(result) if result else '""'
+
+    @staticmethod
     def list_all_notes() -> List[str]:
         """
         Get a list of all notes.
@@ -90,8 +121,8 @@ class NoteOperations:
         Returns:
             The body/content of the note
         """
-        escaped_name = NoteOperations._escape_string(note_name)
-        script = f'tell application "Notes" to get body of note "{escaped_name}"'
+        name_expr = NoteOperations._applescript_string(note_name)
+        script = f'tell application "Notes" to get body of first note whose name = {name_expr}'
         output = run_inline_applescript(script)
         return output
 
@@ -109,9 +140,9 @@ class NoteOperations:
         """
         # Escape quotes in the body
         escaped_body = NoteOperations._escape_string(new_body)
-        escaped_name = NoteOperations._escape_string(note_name)
+        name_expr = NoteOperations._applescript_string(note_name)
 
-        script = f'tell application "Notes" to set body of note "{escaped_name}" to "{escaped_body}"'
+        script = f'tell application "Notes" to set body of (first note whose name = {name_expr}) to "{escaped_body}"'
         output = run_inline_applescript(script)
         return {"status": "updated", "note": note_name}
 
@@ -126,8 +157,8 @@ class NoteOperations:
         Returns:
             Dictionary with deletion details
         """
-        escaped_name = NoteOperations._escape_string(note_name)
-        script = f'tell application "Notes" to delete note "{escaped_name}"'
+        name_expr = NoteOperations._applescript_string(note_name)
+        script = f'tell application "Notes" to delete (first note whose name = {name_expr})'
         output = run_inline_applescript(script)
         return {"status": "deleted", "note": note_name}
 
@@ -143,9 +174,9 @@ class NoteOperations:
         Returns:
             Dictionary with move details
         """
-        escaped_name = NoteOperations._escape_string(note_name)
+        name_expr = NoteOperations._applescript_string(note_name)
         escaped_folder = NoteOperations._escape_string(target_folder)
-        script = f'tell application "Notes" to move note "{escaped_name}" to folder "{escaped_folder}"'
+        script = f'tell application "Notes" to move (first note whose name = {name_expr}) to folder "{escaped_folder}"'
         output = run_inline_applescript(script)
         return {"status": "moved", "note": note_name, "folder": target_folder}
 
@@ -191,8 +222,8 @@ class NoteOperations:
         Returns:
             Creation date of the note
         """
-        escaped_name = NoteOperations._escape_string(note_name)
-        script = f'tell application "Notes" to get creation date of note "{escaped_name}"'
+        name_expr = NoteOperations._applescript_string(note_name)
+        script = f'tell application "Notes" to get creation date of (first note whose name = {name_expr})'
         output = run_inline_applescript(script)
         return output
 
@@ -207,8 +238,8 @@ class NoteOperations:
         Returns:
             Modification date of the note
         """
-        escaped_name = NoteOperations._escape_string(note_name)
-        script = f'tell application "Notes" to get modification date of note "{escaped_name}"'
+        name_expr = NoteOperations._applescript_string(note_name)
+        script = f'tell application "Notes" to get modification date of (first note whose name = {name_expr})'
         output = run_inline_applescript(script)
         return output
 
@@ -225,12 +256,12 @@ class NoteOperations:
         Returns:
             ID of the note
         """
-        escaped_name = NoteOperations._escape_string(note_name)
+        name_expr = NoteOperations._applescript_string(note_name)
         if folder_name:
             escaped_folder = NoteOperations._escape_string(folder_name)
-            script = f'tell application "Notes" to get id of note "{escaped_name}" of folder "{escaped_folder}"'
+            script = f'tell application "Notes" to get id of (first note of folder "{escaped_folder}" whose name = {name_expr})'
         else:
-            script = f'tell application "Notes" to get id of note "{escaped_name}"'
+            script = f'tell application "Notes" to get id of (first note whose name = {name_expr})'
         output = run_inline_applescript(script)
         return output
 
@@ -246,14 +277,13 @@ class NoteOperations:
         Returns:
             Folder/container name of the note
         """
-        escaped_name = NoteOperations._escape_string(note_name)
-        
-        # If folder is provided, query within that folder context for better accuracy
+        name_expr = NoteOperations._applescript_string(note_name)
+
         if folder_name:
             escaped_folder = NoteOperations._escape_string(folder_name)
-            script = f'tell application "Notes" to get name of container of note "{escaped_name}" of folder "{escaped_folder}"'
+            script = f'tell application "Notes" to get name of container of (first note of folder "{escaped_folder}" whose name = {name_expr})'
         else:
-            script = f'tell application "Notes" to get name of container of note "{escaped_name}"'
+            script = f'tell application "Notes" to get name of container of (first note whose name = {name_expr})'
         
         output = run_inline_applescript(script)
         return output
@@ -269,8 +299,8 @@ class NoteOperations:
         Returns:
             Dictionary of note properties
         """
-        escaped_name = NoteOperations._escape_string(note_name)
-        script = f'tell application "Notes" to get properties of note "{escaped_name}"'
+        name_expr = NoteOperations._applescript_string(note_name)
+        script = f'tell application "Notes" to get properties of (first note whose name = {name_expr})'
         output = run_inline_applescript(script)
         return parse_applescript_dict(output)
 
@@ -285,10 +315,10 @@ class NoteOperations:
         Returns:
             Creation date as Unix timestamp
         """
-        escaped_name = NoteOperations._escape_string(note_name)
+        name_expr = NoteOperations._applescript_string(note_name)
         script = (
-            'tell application "Notes" to get (creation date of note '
-            f'"{escaped_name}") - (date "January 1, 1970")'
+            f'tell application "Notes" to get (creation date of (first note whose name = {name_expr})'
+            ') - (date "January 1, 1970")'
         )
         output = run_inline_applescript(script)
         try:
@@ -308,17 +338,17 @@ class NoteOperations:
         Returns:
             Modification date as Unix timestamp
         """
-        escaped_name = NoteOperations._escape_string(note_name)
+        name_expr = NoteOperations._applescript_string(note_name)
         if folder_name:
             escaped_folder = NoteOperations._escape_string(folder_name)
             script = (
-                f'tell application "Notes" to get (modification date of note '
-                f'"{escaped_name}" of folder "{escaped_folder}") - (date "January 1, 1970")'
+                f'tell application "Notes" to get (modification date of (first note of folder "{escaped_folder}" whose name = {name_expr})'
+                ') - (date "January 1, 1970")'
             )
         else:
             script = (
-                'tell application "Notes" to get (modification date of note '
-                f'"{escaped_name}") - (date "January 1, 1970")'
+                f'tell application "Notes" to get (modification date of (first note whose name = {name_expr})'
+                ') - (date "January 1, 1970")'
             )
         output = run_inline_applescript(script)
         try:
